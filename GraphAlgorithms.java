@@ -115,11 +115,10 @@ public class GraphAlgorithms {
 
             Graph.Edge<V,E> lastEdge = g.getEdge(curPath.get(curPath.size()-1), curPath.get(curPath.size() - curPath.size()));  // Grab last edge
             if (lastEdge != null){  // Add last edge to curPath and output
-                curPathEdges.add(lastEdge);
                 output.add(curPathEdges);
             }
-            curPathEdges.add(lastEdge);
-            output.add(curPathEdges);
+            // curPathEdges.add(lastEdge);
+            // output.add(curPathEdges);
         }
 
         else{
@@ -142,23 +141,49 @@ public class GraphAlgorithms {
 
     public static <V, E> Collection<Graph.Edge<V, E>> mst(Graph<V, E> g){
 
-        Graph.Vertex<V,E> start = g.getVertex(0);   // Get first vertex to start
+        Graph.Vertex<V,E> cur = g.getVertex(0);   // Get first vertex to start
 
-        ArrayList<Graph.Vertex<V,E>> seen = new ArrayList();
-        Collection<Graph.Edge<V,E>> tree = Collection();
+        ArrayList<Graph.Vertex<V,E>> seen = new ArrayList();    // Create ArrayList to hold seen vertices
+        Collection<Graph.Edge<V,E>> tree = new ArrayList();  // Create Collection to hold the mst
 
-        seen.add(start);
-        mst(g, start, seen, tree);
+        seen.add(cur);    // add first vertex to seen
+
+        PriorityQueue<Graph.Edge<V,E>> queue = new PriorityQueue<>(new Comparator<Graph.Edge<V, E>>() {
+            @Override
+            public int compare(Graph.Edge<V, E> o1, Graph.Edge<V, E> o2) {
+                if(((Graph.WeightedEdge<V,E>)o1).weight > ((Graph.WeightedEdge<V,E>)o2).weight) return 1;
+
+                else if (((Graph.WeightedEdge<V,E>)o1).weight < ((Graph.WeightedEdge<V,E>)o2).weight) return -1;
+
+                else return 0;
+            }
+        }); // PriorityQueue to hold edges going out from current vertex
+
+        while (seen.size() < g.getVertices().size()){
+
+            for (Graph.Edge<V,E> edge: cur.edgesOut()){
+
+                if (!queue.contains(edge)){
+
+                    queue.add(edge);
+                    //System.out.println(queue);
+                }
+            }
+
+            Graph.Edge<V,E> minEdge = queue.poll();
+            tree.add(minEdge);
+            Graph.Vertex<V,E> next = minEdge.other(cur);
+            seen.add(next);
+            cur = next;
+        }
         return tree;
     }
 
-    private static <V,E> Collection<Graph.Edge<V,E>> mst(Graph<V,E> g, Graph.Vertex<V,E> start, ArrayList<Graph.Vertex<V,E>> seen, Collection<Graph.Edge<V,E>> tree){
+    // public static <V, E> tspApprox(Graph<V, E> g){
 
-        if (tree.size() == g.getVertices().size()-1){
-            return tree;
-        }
 
-    }
+    // }
+
 
 
     public static void main(String[] args) throws IOException{
@@ -175,8 +200,11 @@ public class GraphAlgorithms {
 
         Graph<String, Object> graph2 = readData("StateData.csv");
 
-        Graph.Vertex <String, Object>  start = graph2.getVertex(0);
+        //Graph.Vertex <String, Object>  start = graph2.getVertex(0);
 
-        System.out.println(allHamCycles(graph, start));
+        //System.out.println(allHamCycles(graph, start));
+
+        System.out.println(mst(graph2));
+
     }
 }
