@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Stack;
+import java.util.*;
 
 public class GraphAlgorithms {
 
@@ -33,7 +34,7 @@ public class GraphAlgorithms {
             String[] contents = line.split(",");
 
             String state1 = contents[1];
-            String state2 = contents[2];
+            String state2 = contents[3];
 
             if (!cities.containsKey(state1))
                 cities.put(state1, newGraph.addVertex(state1));
@@ -82,6 +83,7 @@ public class GraphAlgorithms {
                 }
             }
         }
+        System.out.println(distances.size());
         return distances;
     }
 
@@ -226,33 +228,69 @@ public class GraphAlgorithms {
             }
             prev = cur;
         }
-        System.out.println(cycle.size());
+        // System.out.println(cycle.size());
         return cycle;
     }
 
+    public static <V, E> boolean isConnected(Graph<V, E> g, Graph.Vertex<V, E> source){
+
+        LinkedList<Graph.Vertex<V,E>> queue = new LinkedList<>();
+        ArrayList<Graph.Vertex<V,E>> seen = new ArrayList<>();
+
+        queue.offer(source);
+
+        seen.add(source);
+
+        while (!queue.isEmpty()){
+
+            Graph.Vertex<V,E> cur = queue.poll();
+            for (Graph.Edge<V,E> edgeOut : cur.edgesOut()){
+
+                Graph.Vertex<V,E> other = edgeOut.other(cur);
+                if (!seen.contains(other) && !queue.contains(other)){
+
+                    seen.add(other);
+                    queue.add(other);
+                }
+            }
+        }
+        if (seen.size() == g.getVertices().size()){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
 
     public static void main(String[] args) throws IOException{
         Graph<String, Object> graph = new Graph<>();
         for(int i = 0; i < 9; i++) graph.addVertex("" + i);
 
-        for(int i = 0; i < 9; i++) graph.addEdge(i, (i + 1) % 5, i + 1);
-        for(int i = 0; i < 9; i++) graph.addEdge(i, (i + 2) % 5, i + 1);
+        for(int i = 0; i < 5; i++) graph.addEdge(i, (i + 1) % 5, i + 1);
+        // for(int i = 0; i < 9; i++) graph.addEdge(i, (i + 2) % 5, i + 1);
 
-        System.out.println(graph);
-        System.out.println("-".repeat(25));
-        System.out.println("Shortest Distances: " + shortestPaths(graph, graph.getVertex(0)));
+        // System.out.println(graph);
+        // System.out.println("-".repeat(25));
+        // System.out.println("Shortest Distances: " + shortestPaths(graph, graph.getVertex(0)));
 
-        System.out.println(mst(graph));
+        // System.out.println(mst(graph));
 
 
         Graph<String, Object> graph2 = readData("StateData.csv");
 
-        //Graph.Vertex <String, Object>  start = graph2.getVertex(0);
+        Graph.Vertex <String, Object>  start = graph2.getVertex(0);
+
+        Graph.Vertex <String, Object>  start2 = graph.getVertex(0);
 
         //System.out.println(allHamCycles(graph, start));
 
         //System.out.println(mst(graph2));
 
-        System.out.println(tspApprox(graph2));
+        // System.out.println(tspApprox(graph2));
+
+        System.out.println(shortestPaths(graph2, start));
+        System.out.println(isConnected(graph2, start));
+
+        System.out.println(isConnected(graph, start2));
     }
 }
