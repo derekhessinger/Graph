@@ -22,26 +22,28 @@ public class GraphAlgorithms {
     // Returns a graph object of type <String, object>. Takes filename as argument
     // for graph construction
     public static Graph<String, Object> readData(String filename) throws IOException {
-        FileReader fr = new FileReader(filename);
-        BufferedReader br = new BufferedReader(fr);
 
-        Graph<String, Object> newGraph = new Graph<>();
-        HashMap<String, Graph.Vertex<String, Object>> cities = new HashMap<>();
+        FileReader fr = new FileReader(filename);   // Create filereader
+        BufferedReader br = new BufferedReader(fr); // Create bufferedreader
 
-        br.readLine();
-        String line = br.readLine();
-        while (line != null) {
-            String[] contents = line.split(",");
+        Graph<String, Object> newGraph = new Graph<>(); // Create graph object
+        HashMap<String, Graph.Vertex<String, Object>> cities = new HashMap<>(); // Create hashmap to hold cities
 
-            String state1 = contents[1];
-            String state2 = contents[3];
+        br.readLine();  // Read first line to skip headers
+        String line = br.readLine();    // Read first line of data
+        while (line != null) {  // While line is not null
 
-            if (!cities.containsKey(state1))
+            String[] contents = line.split(",");    // Split on commas
+
+            String state1 = contents[1];    // Grab first state
+            String state2 = contents[3];    // Grab second state
+
+            if (!cities.containsKey(state1))    // If hashmap does not contain first state, add to graph
                 cities.put(state1, newGraph.addVertex(state1));
-            if (!cities.containsKey(state2))
+            if (!cities.containsKey(state2))    // If hashmap does not contain second state, add to graph
                 cities.put(state2, newGraph.addVertex(state2));
 
-            newGraph.addEdge(cities.get(state1), cities.get(state2), Integer.parseInt(contents[5]));
+            newGraph.addEdge(cities.get(state1), cities.get(state2), Integer.parseInt(contents[5]));    // Add edge between states
             line = br.readLine();
         }
         br.close();
@@ -51,39 +53,43 @@ public class GraphAlgorithms {
     // Returns a hashmap of the shortest path between all nodes in map
     // Takes a graph and vertex as arguments
     public static <V, E> HashMap<Graph.Vertex<V, E>, Double> shortestPaths(Graph<V, E> g, Graph.Vertex<V, E> source) {
-        HashMap<Graph.Vertex<V, E>, Double> distances = new HashMap<>();
-        for (Graph.Vertex<V, E> vertex : g.getVertices()) {
-            distances.put(vertex, Double.POSITIVE_INFINITY);
-        }
-        distances.put(source, 0.0);
 
-        PriorityQueue<Graph.Vertex<V, E>> queue = new PriorityQueue<>(new Comparator<Graph.Vertex<V, E>>() {
+        HashMap<Graph.Vertex<V, E>, Double> distances = new HashMap<>();    // Create a hashmap to hold distances
+        for (Graph.Vertex<V, E> vertex : g.getVertices()) { // For each vertex in the graph
+
+            distances.put(vertex, Double.POSITIVE_INFINITY);    // Add the vertex to distances with a distance of infinity
+        }
+        distances.put(source, 0.0);     // Add the starting vertex with a distance of 0
+
+        PriorityQueue<Graph.Vertex<V, E>> queue = new PriorityQueue<>(new Comparator<Graph.Vertex<V, E>>() {    // PriorityQueue with comparator
             @Override
             public int compare(Graph.Vertex<V, E> o1, Graph.Vertex<V, E> o2) {
                 return distances.get(o1).compareTo(distances.get(o2));
             }
         });
 
-        for (Graph.Vertex<V, E> vertex : g.getVertices()) {
+        for (Graph.Vertex<V, E> vertex : g.getVertices()) { // For each vertex in the graph, add it to queue
             queue.offer(vertex);
         }
 
-        while (!queue.isEmpty()) { // O(V) where V is number of vertices
-            Graph.Vertex<V, E> cur = queue.poll(); // O(log V)
+        while (!queue.isEmpty()) { // While the queue is not empty
 
-            for (Graph.Edge<V, E> edgeOut : cur.edgesOut()) { // O(V)
-                Graph.Vertex<V, E> next = edgeOut.other(cur);
+            Graph.Vertex<V, E> cur = queue.poll(); // Poll the next vertex
 
-                double curDistToNext = distances.get(next);
-                double newDist = distances.get(cur) + ((Graph.WeightedEdge<V, E>) edgeOut).weight;
-                if (newDist < curDistToNext) {
-                    distances.put(next, newDist);
-                    queue.remove(next); // O(log V) for Java, but could be O(1) if implemented better
-                    queue.offer(next);
+            for (Graph.Edge<V, E> edgeOut : cur.edgesOut()) { // For each edge out of cur
+
+                Graph.Vertex<V, E> next = edgeOut.other(cur);   // Get the vertex at the other end of the edge
+
+                double curDistToNext = distances.get(next); // Get the distance to the next vertex
+                double newDist = distances.get(cur) + ((Graph.WeightedEdge<V, E>) edgeOut).weight;  // Calculate the new distance
+                if (newDist < curDistToNext) {  // If the new distance is less than the current distance
+
+                    distances.put(next, newDist);   // Put the new vertex into distances with the new distance
+                    queue.remove(next); // Remove the next vertex from queue
+                    queue.offer(next);  // Reinsert the vertex into the queue
                 }
             }
         }
-        System.out.println(distances.size());
         return distances;
     }
 
@@ -99,36 +105,39 @@ public class GraphAlgorithms {
 
     // Helper function
     private static <V, E> void allHamCycles(Graph<V, E> g, Collection<List<Graph.Edge<V, E>>> output, List<Graph.Vertex<V, E>> curPath) {
-        if (curPath.size() == g.getVertices().size()) { // if the path length is equal to the number of vertices
+
+        System.out.println(output.size());  // Print out output size to track over time
+
+        if (curPath.size() == g.getVertices().size()) { // If the path length is equal to the number of vertices
 
             ArrayList<Graph.Edge<V, E>> curPathEdges = new ArrayList<>();   // Create arraylist of edges
 
-            for (int i = 0; i < curPath.size() - 1; i++){   // for each vertex in curPath
+            for (int i = 0; i < curPath.size() - 1; i++){   // For each vertex in curPath
 
                 // Get vertices
                 Graph.Vertex<V,E> v0 = curPath.get(i);
                 Graph.Vertex<V,E> v1 = curPath.get(i+1);
 
-                // make edge
-                Graph.Edge<V,E> edge = g.getEdge(v0, v1);
-
-                // add edge to output
-                curPathEdges.add(edge);
+                Graph.Edge<V,E> edge = g.getEdge(v0, v1);   // Make edge
+                if (edge!= null){
+                    curPathEdges.add(edge);     // Add edge to output
+                }
             }
 
             Graph.Edge<V,E> lastEdge = g.getEdge(curPath.get(curPath.size()-1), curPath.get(curPath.size() - curPath.size()));  // Grab last edge
             if (lastEdge != null){  // Add last edge to curPath and output
+
+                curPathEdges.add(lastEdge);
                 output.add(curPathEdges);
             }
-            // curPathEdges.add(lastEdge);
-            // output.add(curPathEdges);
         }
 
         else{
             // find the next vertex reachable from the end of curPath, add it to curPath, recurse
             Graph.Vertex<V,E> last = curPath.get(curPath.size()-1);
-            //Collection<Graph.Vertex<V, E>> neighbors = last.neighborsOut();
-            for (Graph.Edge <V,E> neighbor: last.edgesOut()){
+
+            for (Graph.Edge <V,E> neighbor: last.edgesOut()){   // For each edge out from last
+
                 Graph.Vertex <V,E> next = neighbor.other(last); // Grab last vertex
 
                 if (!curPath.contains(next)){   // If curPath does not contain next
@@ -136,7 +145,6 @@ public class GraphAlgorithms {
                     curPath.add(next);  // Add next
                     allHamCycles(g, output, curPath);   // Recurse
                     curPath.remove(curPath.size()-1);   // Remove last vertex
-                    System.out.println(curPath.size()); // Print out curPath size
                 }
             }
         }
@@ -201,11 +209,12 @@ public class GraphAlgorithms {
 
         while (!stk.isEmpty()){
 
-            Graph.Vertex<V,E> cur = stk.pop();
+            Graph.Vertex<V,E> cur = stk.pop();  // Pop the next vertex from the stack
 
             if (prev != null){      // If the last vertex is not null
 
-                if (g.getEdge(prev, cur) != null){
+                if (g.getEdge(prev, cur) != null){  // If the edge exists
+
                     cycle.add(g.getEdge(prev, cur));     // Add an edge between the last vertex and current vertex
                 }
             }
@@ -213,84 +222,85 @@ public class GraphAlgorithms {
             if (!seen.contains(cur)){       // If the current vertex has not been seen, add it to seen
                     seen.add(cur);
             }
-            for (Graph.Edge<V,E> edge : tree){
 
-                if (edge.vertices().contains(cur)){
+            for (Graph.Edge<V,E> edge : tree){  // For each edge in the tree
 
-                    Graph.Vertex<V,E> neighbor = edge.other(cur);
-                    if (seen.contains(neighbor)){
+                if (edge.vertices().contains(cur)){     // If cur is on one of the ends of the edge
+
+                    Graph.Vertex<V,E> neighbor = edge.other(cur);   // Get the other vertex on the edge
+                    if (seen.contains(neighbor)){   // If this vertex is already in seen,skip this iteration
 
                         continue;
                     }
-                    stk.add(neighbor);
-                    seen.add(neighbor);
+                    stk.add(neighbor);  // Add the neighbor to the stack
+                    seen.add(neighbor); // Add the neighbor to seen
                 }
             }
-            prev = cur;
+            prev = cur; // Set previous to the current node
         }
-        // System.out.println(cycle.size());
         return cycle;
     }
 
+    // Returns whether a given graph is connected or not
+    // Takes a graph and a starting node as arguments
     public static <V, E> boolean isConnected(Graph<V, E> g, Graph.Vertex<V, E> source){
 
-        LinkedList<Graph.Vertex<V,E>> queue = new LinkedList<>();
-        ArrayList<Graph.Vertex<V,E>> seen = new ArrayList<>();
+        LinkedList<Graph.Vertex<V,E>> queue = new LinkedList<>();   // Create a linked list as a queue for the vertices
+        ArrayList<Graph.Vertex<V,E>> seen = new ArrayList<>();   // Create an ArrayList to hold the seen vertices 
 
-        queue.offer(source);
+        queue.offer(source);    // Offer the first vertex to the queue
+        seen.add(source);   // Add the first vertex to seen
 
-        seen.add(source);
+        while (!queue.isEmpty()){   // While the queue is not empty
 
-        while (!queue.isEmpty()){
+            Graph.Vertex<V,E> cur = queue.poll();   // Poll the next vertex
+            for (Graph.Edge<V,E> edgeOut : cur.edgesOut()){ // For each edge out from cur
 
-            Graph.Vertex<V,E> cur = queue.poll();
-            for (Graph.Edge<V,E> edgeOut : cur.edgesOut()){
+                Graph.Vertex<V,E> other = edgeOut.other(cur);   // Get the other vertex from the edge
+                if (!seen.contains(other) && !queue.contains(other)){   // If this vertex is not in seen or the queue
 
-                Graph.Vertex<V,E> other = edgeOut.other(cur);
-                if (!seen.contains(other) && !queue.contains(other)){
-
-                    seen.add(other);
-                    queue.add(other);
+                    seen.add(other);    // Add new vertex to seen
+                    queue.add(other);   // Add new vertex to queue
                 }
             }
         }
-        if (seen.size() == g.getVertices().size()){
+        if (seen.size() == g.getVertices().size()){ // If seen is the size of the number of vertices in the graph, return true
             return true;
         }
-        else{
+        else{   // Return false if seen is not the size of the number of vertices in the graph
             return false;
         }
     }
 
     public static void main(String[] args) throws IOException{
         Graph<String, Object> graph = new Graph<>();
-        for(int i = 0; i < 9; i++) graph.addVertex("" + i);
+        for(int i = 0; i < 15; i++) graph.addVertex("" + i);
 
-        for(int i = 0; i < 5; i++) graph.addEdge(i, (i + 1) % 5, i + 1);
-        // for(int i = 0; i < 9; i++) graph.addEdge(i, (i + 2) % 5, i + 1);
+        for(int i = 0; i < 15; i++) graph.addEdge(i, (i + 1) % 5, i + 1);
+        for(int i = 0; i < 15; i++) graph.addEdge(i, (i + 2) % 5, i + 1);
 
-        // System.out.println(graph);
+        Graph.Vertex <String, Object>  start = graph.getVertex(0);
+
+        System.out.println(graph);
         // System.out.println("-".repeat(25));
         // System.out.println("Shortest Distances: " + shortestPaths(graph, graph.getVertex(0)));
 
-        // System.out.println(mst(graph));
+        System.out.println(mst(graph));
+
+        System.out.println(allHamCycles(graph, start));
 
 
-        Graph<String, Object> graph2 = readData("StateData.csv");
+        // Graph<String, Object> graph2 = readData("StateData.csv");
 
-        Graph.Vertex <String, Object>  start = graph2.getVertex(0);
+        // Graph.Vertex <String, Object>  start = graph2.getVertex(0);
 
-        Graph.Vertex <String, Object>  start2 = graph.getVertex(0);
-
-        //System.out.println(allHamCycles(graph, start));
+        // System.out.println(allHamCycles(graph2, start));
 
         //System.out.println(mst(graph2));
 
         // System.out.println(tspApprox(graph2));
 
-        System.out.println(shortestPaths(graph2, start));
-        System.out.println(isConnected(graph2, start));
-
-        System.out.println(isConnected(graph, start2));
+        // System.out.println(shortestPaths(graph2, start));
+        // System.out.println(isConnected(graph2, start));
     }
 }
