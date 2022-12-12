@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Stack;
 
 public class GraphAlgorithms {
 
@@ -139,51 +140,95 @@ public class GraphAlgorithms {
         }
     }
 
-    public static <V, E> Collection<Graph.Edge<V, E>> mst(Graph<V, E> g){
+    // Minimum spanning tree, implemented with Prim's algorithm
+    // Returns a collection of edges that holds the mst
+    public static <V, E> Collection<Graph.Edge<V, E>> mst(Graph<V, E> g){  
 
         Graph.Vertex<V,E> cur = g.getVertex(0);   // Get first vertex to start
-
         ArrayList<Graph.Vertex<V,E>> seen = new ArrayList();    // Create ArrayList to hold seen vertices
         Collection<Graph.Edge<V,E>> tree = new ArrayList();  // Create Collection to hold the mst
-
         seen.add(cur);    // add first vertex to seen
 
-        PriorityQueue<Graph.Edge<V,E>> queue = new PriorityQueue<>(new Comparator<Graph.Edge<V, E>>() {
+        PriorityQueue<Graph.Edge<V,E>> queue = new PriorityQueue<>(new Comparator<Graph.Edge<V, E>>() { // PriorityQueue to hold edges going out from current vertex
+
             @Override
             public int compare(Graph.Edge<V, E> o1, Graph.Edge<V, E> o2) {
+
                 if(((Graph.WeightedEdge<V,E>)o1).weight > ((Graph.WeightedEdge<V,E>)o2).weight) return 1;
 
                 else if (((Graph.WeightedEdge<V,E>)o1).weight < ((Graph.WeightedEdge<V,E>)o2).weight) return -1;
 
                 else return 0;
             }
-        }); // PriorityQueue to hold edges going out from current vertex
+        });
 
-        while (seen.size() < g.getVertices().size()){
+        for (Graph.Edge<V,E> edgeOut : cur.edgesOut()){ // Add all edges out from cur to queue
+            queue.add(edgeOut);
+        }
 
-            for (Graph.Edge<V,E> edge: cur.edgesOut()){
+        while (seen.size() < g.getVertices().size()){   // While all vertices have not yet been visited
 
-                if (!queue.contains(edge)){
+            Graph.Edge<V,E> minEdge = queue.poll(); // Poll the minimum edge from the queue
+            for (Graph.Vertex<V,E> v : minEdge.vertices()){ // For each vertex attached to the min edge
 
-                    queue.add(edge);
-                    //System.out.println(queue);
+                if (seen.contains(v)) continue; // If seen contains v, skip this iteration of the loop 
+                tree.add(minEdge); // Add min edge to collection of edges
+                seen.add(v); // Add v to seen
+                cur = v; // set cur to v to advance cur
+                for (Graph.Edge<V,E> edgeOut : cur.edgesOut()){
+
+                    queue.add(edgeOut); // Add all edges out from vertex to queue
+                } 
+            }
+        }
+        return tree;    // Return mst of edges
+    }
+
+    public static <V, E> Collection<Graph.Edge<V, E>> tspApprox(Graph<V, E> g){
+
+        Collection<Graph.Edge<V,E>> tree = mst(g); // Get an MST of the graph
+        ArrayList<Graph.Vertex<V,E>> seen = new ArrayList();    // Create ArrayList to hold seen vertices
+        Stack<Graph.Vertex<V,E>> stk = new Stack<>();     // Stack to hold edges in hamiltonian cycle
+        List<Graph.Edge<V,E>> cycle = new ArrayList<Graph.Edge<V,E>>(); // Create Arraylist to hold solution cycle
+
+        Graph.Vertex<V,E> start = g.getVertex(0);   // Create reference to first vertex
+        Graph.Vertex<V,E> prev = null;   // Create reference to last vertex
+
+        stk.push(start);    // Push start to stack
+        seen.add(start);    // Add start to seen
+
+        while (!stk.isEmpty()){
+
+            Graph.Vertex<V,E> cur = stk.pop();
+
+            if (prev != null){      // If the last vertex is not null
+
+                if (g.getEdge(prev, cur) != null){
+                    cycle.add(g.getEdge(prev, cur));     // Add an edge between the last vertex and current vertex
                 }
             }
 
-            Graph.Edge<V,E> minEdge = queue.poll();
-            tree.add(minEdge);
-            Graph.Vertex<V,E> next = minEdge.other(cur);
-            seen.add(next);
-            cur = next;
+            if (!seen.contains(cur)){       // If the current vertex has not been seen, add it to seen
+                    seen.add(cur);
+            }
+            for (Graph.Edge<V,E> edge : tree){
+
+                if (edge.vertices().contains(cur)){
+
+                    Graph.Vertex<V,E> neighbor = edge.other(cur);
+                    if (seen.contains(neighbor)){
+
+                        continue;
+                    }
+                    stk.add(neighbor);
+                    seen.add(neighbor);
+                }
+            }
+            prev = cur;
         }
-        return tree;
+        System.out.println(cycle.size());
+        return cycle;
     }
-
-    // public static <V, E> tspApprox(Graph<V, E> g){
-
-
-    // }
-
 
 
     public static void main(String[] args) throws IOException{
@@ -197,6 +242,8 @@ public class GraphAlgorithms {
         System.out.println("-".repeat(25));
         System.out.println("Shortest Distances: " + shortestPaths(graph, graph.getVertex(0)));
 
+        System.out.println(mst(graph));
+
 
         Graph<String, Object> graph2 = readData("StateData.csv");
 
@@ -204,7 +251,8 @@ public class GraphAlgorithms {
 
         //System.out.println(allHamCycles(graph, start));
 
-        System.out.println(mst(graph2));
+        //System.out.println(mst(graph2));
 
+        System.out.println(tspApprox(graph2));
     }
 }
