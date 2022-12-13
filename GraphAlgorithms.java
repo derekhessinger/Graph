@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Stack;
 import java.util.*;
+import java.util.Random;
 
 public class GraphAlgorithms {
 
@@ -150,6 +151,34 @@ public class GraphAlgorithms {
         }
     }
 
+    // Returns the minimum distance Hamiltonian Cycle
+    // Takes a graph and vertex as arguments
+    public static <V,E> List<Graph.Edge<V, E>> minTSP(Graph<V, E> g, Graph.Vertex<V, E> source){
+
+        Collection<List<Graph.Edge<V, E>>> cycles = allHamCycles(g, source);    // Create collection of all Hamiltonian Cycles
+
+        List<Graph.Edge<V, E>> min = null;  // Set min path to null
+
+        int minWeight = 10000000; // Set min path length to an arbitrary large value
+
+        for (List<Graph.Edge<V, E>> path : cycles){ // For each path in the cycles collection
+
+            int totalWeight = 0;    // Set the weight of the path to 0
+
+            for (Graph.Edge<V, E> edge : path){ // For each edge in the path
+
+                totalWeight += ((Graph.WeightedEdge<V, E>) edge).weight;    // Add the weight of the edge to totalWeight
+            }
+
+            if (totalWeight < minWeight){   // If the totalWeight is less than the minWeight
+
+                minWeight = totalWeight;    // Update minWeight to totalWeight
+                min = path;     // Set min path to current path
+            }
+        }
+        return min;
+    }
+
     // Minimum spanning tree, implemented with Prim's algorithm
     // Returns a collection of edges that holds the mst
     public static <V, E> Collection<Graph.Edge<V, E>> mst(Graph<V, E> g){  
@@ -200,8 +229,9 @@ public class GraphAlgorithms {
         ArrayList<Graph.Vertex<V,E>> seen = new ArrayList();    // Create ArrayList to hold seen vertices
         Stack<Graph.Vertex<V,E>> stk = new Stack<>();     // Stack to hold edges in hamiltonian cycle
         List<Graph.Edge<V,E>> cycle = new ArrayList<Graph.Edge<V,E>>(); // Create Arraylist to hold solution cycle
+        Random ran = new Random();
 
-        Graph.Vertex<V,E> start = g.getVertex(0);   // Create reference to first vertex
+        Graph.Vertex<V,E> start = g.getVertex(ran.nextInt(g.getVertices().size()-1));   // Create reference to first vertex
         Graph.Vertex<V,E> prev = null;   // Create reference to last vertex
 
         stk.push(start);    // Push start to stack
@@ -238,6 +268,12 @@ public class GraphAlgorithms {
             }
             prev = cur; // Set previous to the current node
         }
+        int totalWeight = 0;    // Hold total weight (time) of path
+        for (Graph.Edge<V, E> edge : cycle){ // For each edge in the path
+
+                totalWeight += ((Graph.WeightedEdge<V, E>) edge).weight;    // Add the weight of the edge to totalWeight
+            }
+        System.out.println("Total time in seconds: " + totalWeight);    // Print out the total time of the path
         return cycle;
     }
 
@@ -273,32 +309,34 @@ public class GraphAlgorithms {
     }
 
     public static void main(String[] args) throws IOException{
-        Graph<String, Object> graph = new Graph<>();
-        for(int i = 0; i < 15; i++) graph.addVertex("" + i);
+        // Graph<String, Object> graph = new Graph<>();
+        // for(int i = 0; i < 15; i++) graph.addVertex("" + i);
 
-        for(int i = 0; i < 15; i++) graph.addEdge(i, (i + 1) % 5, i + 1);
-        for(int i = 0; i < 15; i++) graph.addEdge(i, (i + 2) % 5, i + 1);
+        // for(int i = 0; i < 15; i++) graph.addEdge(i, (i + 1) % 5, i + 1);
+        // for(int i = 0; i < 15; i++) graph.addEdge(i, (i + 2) % 5, i + 1);
 
-        Graph.Vertex <String, Object>  start = graph.getVertex(0);
+        // Graph.Vertex <String, Object>  start = graph.getVertex(0);
 
-        System.out.println(graph);
+        // System.out.println(graph);
         // System.out.println("-".repeat(25));
         // System.out.println("Shortest Distances: " + shortestPaths(graph, graph.getVertex(0)));
 
-        System.out.println(mst(graph));
+        // System.out.println(mst(graph));
 
-        System.out.println(allHamCycles(graph, start));
+        // System.out.println(allHamCycles(graph, start));
 
 
-        // Graph<String, Object> graph2 = readData("StateData.csv");
+        Graph<String, Object> graph2 = readData("StateData.csv");
 
         // Graph.Vertex <String, Object>  start = graph2.getVertex(0);
 
+        // System.out.println(minTSP(graph2, start));
+
         // System.out.println(allHamCycles(graph2, start));
 
-        //System.out.println(mst(graph2));
+        // System.out.println(mst(graph2));
 
-        // System.out.println(tspApprox(graph2));
+        System.out.println(tspApprox(graph2));
 
         // System.out.println(shortestPaths(graph2, start));
         // System.out.println(isConnected(graph2, start));
